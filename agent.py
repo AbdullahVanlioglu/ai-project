@@ -18,18 +18,20 @@ class DRQNAgent(object):
         self.targetnet = deepcopy(self.drqn_net).to(self.device)
         self.buffer = UniformBuffer(capacity = self.capacity,
                                     state_shape = self.state_shape,
-                                    dtype = self.state_dtype
+                                    state_dtype = self.state_dtype
                                     )
 
     def e_greedy_policy(self, state, hidden_state, epsilon):
         if np.random.random() < epsilon:
-            return np.random.randint(0, self.n_action)
+            _, new_hidden = self.drqn_net(state, hidden_state).to(self.device)
+            return np.random.randint(0, self.n_action), new_hidden
         else:
-            return self.greedy_policy(state, hidden_state, self.device)
+            return self.greedy_policy(state, hidden_state)
 
     def greedy_policy(self, state, hidden_state):
         values, new_hidden = self.drqn_net(state, hidden_state).to(self.device)
         action = torch.argmax(values, dim = 1)
+
         return action, new_hidden
 
     def loss(self,batch_size):

@@ -3,37 +3,24 @@ import torch
 
 from collections import namedtuple, deque
 from agent import DRQNAgent
-from network import DRQN
+from torch.autograd import Variable
 
 class TrainDRQN:
-    def __init__(self, 
-                env,
-                agent, 
-                num_episode, 
-                num_frames, 
-                epsilon, 
-                epsilon_decay,
-                epsilon_min, 
-                lr, 
-                batch_size, 
-                target_update_period,
-                write_period
-                ):
+    def __init__(self, env, agent, args):
 
         self.env = env
         self.agent = agent
-        self.num_episode = num_episode
-        self.frames = num_frames
-        self.epsilon = epsilon
-        self.epsilon_decay = epsilon_decay
-        self.epsilon_min = epsilon_min
-        self.lr = lr
-        self.batch_size = batch_size
-        self.target_update_period = target_update_period
+        self.num_episode = args.num_episode
+        self.max_iteration = args.max_iteration
+        self.epsilon = args.epsilon_init
+        self.epsilon_decay = args.epsilon_decay
+        self.epsilon_min = args.epsilon_min
+        self.lr = args.lr
+        self.batch_size = args.batch_size
+        self.target_update_period = args.target_update_period
         self.manuel_control = False
-        self.write_period = write_period
+        self.write_period = args.write_period
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
         self.optimizer = torch.optim.Adam(self.agent.drqn_net.parameters(), lr = self.lr)
 
     def Trainer(self, args):
@@ -50,7 +37,7 @@ class TrainDRQN:
 
         Transition = namedtuple("Transition", "state action reward next_state terminal")
         
-        for eps in range(args.max_episode_len):
+        for eps in range(self.num_episode):
             loss = 0
             episode_reward = 0
             agent_loss = []
@@ -58,11 +45,11 @@ class TrainDRQN:
 
             hidden_state = (Variable(torch.zeros(1, 1, 16).float()), Variable(torch.zeros(1, 1, 16).float()))
             state = self.env.reset()
-            for _ in range(args.max_iter):
+            for _ in range(self.max_iteration):
                 ix += 1
 
-                torch_state = DRQNAgent.state_to_torch(state, self.device).unsqueeze(0)
-                action, hidden_state = self.agent.e_greedy_policy(torch_state, hidden_state,self.epsilon, self.device)
+                torch_state = DRQNAgent.state_to_torch(state, self.device)
+                action, hidden_state = self.agent.e_greedy_policy(torch_state, hidden_state, self.epsilon)
 
                 next_state, reward, done, _ = self.env.step(action)   
                 

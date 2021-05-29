@@ -3,6 +3,7 @@ import numpy as np
 
 class DRQN(nn.Module):
     def __init__(self, n_action, input_dim=16, hidden_dim=16):
+        super(DRQN, self).__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.n_layer = 1
@@ -11,7 +12,7 @@ class DRQN(nn.Module):
 
         self.conv_net = nn.Sequential(
                             nn.Conv2d(self.input_dim, 16, 3, stride=1),
-                            nn.ReLU(),
+                            nn.ReLU()
                                     )
 
         self.lstm_net = nn.LSTM(
@@ -27,8 +28,9 @@ class DRQN(nn.Module):
                                 )
 
     
-    def forward(self, x, hidden_state):
-        conv_out = self.conv_net(x)
+    def forward(self, state, hidden_state):
+        conv_out = self.conv_net(state)
+        print("cov", conv_out.shape)
         flat_out = conv_out.view(conv_out.size(0), -1).unsqueeze(1)
         lstm_out, new_hidden = self.lstm_net(flat_out, hidden_state)
         hidden_h, hidden_c = new_hidden

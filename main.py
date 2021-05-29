@@ -8,13 +8,14 @@ from train import TrainDRQN
 
 def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Device:", device)
     env = gym.make("Seaquest-v0")
 
     num_actions = env.action_space.n
     state_shape = env.observation_space.shape
     state_dtype = env.observation_space.dtype
 
-    agent = DRQNAgent(capacity=args.capacity,
+    agent = DRQNAgent(capacity=args.buffer_capacity,
                         n_action=num_actions,
                         state_shape=state_shape,
                         state_dtype=state_dtype,
@@ -24,20 +25,8 @@ def main(args):
                     )
 
 
-    model = TrainDRQN(env=env,
-                        agent=agent,
-                        num_episode=args.max_episode_len,
-                        num_frames=args.frames,
-                        epsilon=args.epsilon_decay,
-                        epsilon_min=args.epsilon_min,
-                        lr=args.lr,
-                        batch_size=args.batch_size,
-                        target_update_period=args.target_update_period,
-                        write_period=args.write_period
-                    )
-
+    model = TrainDRQN(env=env, agent=agent, args=args)
     model.Trainer(args)
-
 
 
 if __name__ == "__main__":
@@ -46,11 +35,11 @@ if __name__ == "__main__":
 	parser.add_argument("--envname", type=str,
 						default="Pygame-v0",
 						help="Name of the environment")
-	parser.add_argument("--max_iter", type=int, default=300,
+	parser.add_argument("--max-iteration", type=int, default=300,
 						help="Number of training iterations")
 	parser.add_argument("--start-update", type=int, default=100,
 						help="Number of iterations until starting to update")
-	parser.add_argument("--max-episode-len", type=int, default=30000,
+	parser.add_argument("--num-episode", type=int, default=30000,
 						help="Maximum length of an episode before termination")
 	parser.add_argument("--batch-size", type=int, default=16,
 						help="Batch size of each update in training")
