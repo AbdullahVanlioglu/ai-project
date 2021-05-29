@@ -21,15 +21,16 @@ class DRQNAgent(object):
                                     dtype = self.state_dtype
                                     )
 
-    def e_greedy_policy(self, state, epsilon):
+    def e_greedy_policy(self, state, hidden_state, epsilon):
         if np.random.random() < epsilon:
             return np.random.randint(0, self.n_action)
         else:
-            return self.greedy_policy(state, self.device)
+            return self.greedy_policy(state, hidden_state, self.device)
 
-    def greedy_policy(self, state):
-        values = self.drqn_net(state).to(self.device)
+    def greedy_policy(self, state, hidden_state):
+        values, new_hidden = self.drqn_net(state, hidden_state).to(self.device)
         action = torch.argmax(values, dim = 1)
+        return action, new_hidden
 
     def loss(self,batch_size):
 

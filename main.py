@@ -46,23 +46,21 @@ if __name__ == "__main__":
 	parser.add_argument("--envname", type=str,
 						default="Pygame-v0",
 						help="Name of the environment")
-	parser.add_argument("--frames", type=int, default=4000000,
+	parser.add_argument("--max_iter", type=int, default=300,
 						help="Number of training iterations")
 	parser.add_argument("--start-update", type=int, default=100,
 						help="Number of iterations until starting to update")
-	parser.add_argument("--max-episode-len", type=int, default=300,
+	parser.add_argument("--max-episode-len", type=int, default=30000,
 						help="Maximum length of an episode before termination")
 	parser.add_argument("--batch-size", type=int, default=16,
 						help="Batch size of each update in training")
 	parser.add_argument("--gamma", type=float, default=0.99,
 						help="Discount Factor")
-	parser.add_argument("--lr", type=float, default=1e-4,
+	parser.add_argument("--lr", type=float, default=1e-3,
 						help="Discount Factor")
-	parser.add_argument("--device", type=str, default="cpu",
-						help="Torch device")
 	parser.add_argument("--target-update-period", type=int, default=2000,
 						help="Target network updating period")
-	parser.add_argument("--buffer-capacity", type=int, default=15000,
+	parser.add_argument("--buffer-capacity", type=int, default=1500,
 						help="Replay buffer capacity")
 	parser.add_argument("--epsilon-init", type=float, default=1,
 						help="Initial value of the epsilon")
@@ -84,22 +82,10 @@ if __name__ == "__main__":
 						help="Directory to save models")
 	parser.add_argument("--write-period", type=int, default=1000,
 						help="Writer period")
-	parser.add_argument("--multi-model", type=int, default=1,
-						help="Single or Multi-agent")
 	parser.add_argument("--test", type=int, default=0,
 						help="Test or Train Model")
-	parser.add_argument("--num-bot", type=int, default=2,
-						help="Number of prey")
-	parser.add_argument("--num-agent", type=int, default=2,
-						help="Number of predator")
 	parser.add_argument("--load-weight", type=int, default=0,
 						help="Transfer learning for Train")
-	parser.add_argument("--skip", type=int, default=13,
-						help="Skip Frames")
-	parser.add_argument("--obs-state", type=str, default="image",
-						help="Type of observation state, image or vector.")
-	parser.add_argument("--server", type=bool, default=False,
-						help="Works on server or not")
 	
 	
 	args = parser.parse_args()
