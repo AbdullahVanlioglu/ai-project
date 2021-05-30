@@ -37,7 +37,7 @@ if __name__ == "__main__":
 	parser.add_argument("--envname", type=str,
 						default="Pygame-v0",
 						help="Name of the environment")
-	parser.add_argument("--max-iteration", type=int, default=300,
+	parser.add_argument("--max-iteration", type=int, default=2000,
 						help="Number of training iterations")
 	parser.add_argument("--start-update", type=int, default=100,
 						help="Number of iterations until starting to update")

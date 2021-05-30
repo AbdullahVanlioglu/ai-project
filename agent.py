@@ -17,7 +17,7 @@ class DRQNAgent(object):
         self.batch_size = batch_size
         self.device = device
         self.drqn_net = DRQN(n_action = self.n_action, hidden_dim=self.hidden_shape[2]).to(self.device)
-        #self.targetnet = deepcopy(self.drqn_net).to(self.device)
+        self.targetnet = deepcopy(self.drqn_net).to(self.device)
         self.buffer = UniformBuffer(capacity = self.capacity,
                                     state_shape = self.state_shape,
                                     state_dtype = self.state_dtype,
@@ -36,6 +36,9 @@ class DRQNAgent(object):
 
         return action, new_hidden
 
+    def update(self, device):
+        self.targetnet.load_state_dict(self.drqn_net.state_dict())
+
     def loss(self,batch_size):
         batch = self.buffer.sample(batch_size)
         batch = self.batch_to_torch(batch, self.device)
@@ -44,7 +47,7 @@ class DRQNAgent(object):
         lstm_hidden_c = Variable(torch.zeros(1, batch_size, 16).float()).to(self.device)
 
         with torch.no_grad():
-            next_values, _ = self.drqn_net(batch.next_state, (lstm_hidden_h, lstm_hidden_c))
+            next_values, _ = self.targetnet(batch.next_state, (lstm_hidden_h, lstm_hidden_c))
             next_values = torch.max(next_values, dim = 1, keepdim = True)[0]
 
         target_value = batch.reward + next_values * (1 - batch.terminal) * self.gamma

@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.lib.histograms import histogramdd
 import torch
 
 from collections import namedtuple, deque
@@ -44,9 +45,11 @@ class TrainDRQN:
             reward_list = []
 
             state = self.env.reset()
-            lstm_hidden_h, lstm_hidden_c = Variable(torch.zeros(1, 1, 16).float()).to(self.device), Variable(torch.zeros(1, 1, 16).float()).to(self.device)
-            
-            for _ in range(self.max_iteration):
+            lstm_hidden_h = Variable(torch.zeros(1, 1, 16).float()).to(self.device)
+            lstm_hidden_c = Variable(torch.zeros(1, 1, 16).float()).to(self.device)
+
+            #for itr in range(self.max_iteration):
+            while True:
                 ix += 1
                 
                 torch_state = DRQNAgent.state_to_torch(state, self.device).unsqueeze(0)
@@ -62,14 +65,14 @@ class TrainDRQN:
 
                 if (ix % 10000 == 0 and ix != 0):
                     torch.save(self.agent.drqn_net.state_dict(), f"weights/drqn_net.ckpt")
-                    #torch.save(self.agent.targetnet.state_dict(), f"weights/drqn_net.ckpt")
+                    torch.save(self.agent.targetnet.state_dict(), f"weights/drqn_net.ckpt")
                     self.Evaluate(args)
                 
                 self.agent.drqn_net.train()
-                #self.agent.targetnet.train()
+                self.agent.targetnet.train()
                 if (self.agent.buffer.size > self.batch_size):
 
-                    #self.agent.update(self.device)
+                    self.agent.update(self.device)
                     self.optimizer.zero_grad()
                     loss = self.agent.loss(self.batch_size)
                     loss.backward()
@@ -81,15 +84,14 @@ class TrainDRQN:
                     scores_window.append(episode_reward)
                     reward_list.append(episode_reward)
                     state = self.env.reset()
-                    
-                    episode_reward = 0
 
                     if self.epsilon >= self.epsilon_min:
                         self.epsilon *= self.epsilon_decay
                 
-                    print("Episode [%d] , Average20 Score = %f, loss = %f, epsilon = %f" % (i_episode, np.mean(scores_window), loss, self.epsilon))
+                    #print("Episode [%d] , Average20 Score = %f, loss = %f, epsilon = %f" % (i_episode, np.mean(scores_window), loss, self.epsilon))
+                    print("Episode [%d] , Episode Score = %f, loss = %f, epsilon = %f" % (i_episode, episode_reward, loss, self.epsilon))
                     i_episode += 1
-                    break
+                    episode_reward = 0
                 
                 self.env.render()
             
@@ -101,6 +103,8 @@ class TrainDRQN:
         i_episode = 1
 
         state = self.env.reset()
+        lstm_hidden_h = Variable(torch.zeros(1, 1, 16).float()).to(self.device)
+        lstm_hidden_c = Variable(torch.zeros(1, 1, 16).float()).to(self.device)
         episode_reward = 0
         
         self.agent.drqn_net.eval()
@@ -109,11 +113,12 @@ class TrainDRQN:
             
             torch_state = DRQNAgent.state_to_torch(state, self.device).unsqueeze(0)
 
-            action = self.agent.greedy_policy(torch_state, self.device)
+            action, hidden_state = self.agent.greedy_policy(torch_state, (lstm_hidden_h, lstm_hidden_c))
             next_state, reward, done, _ = self.env.step(action)   
 
             state = next_state
             episode_reward += reward
+            lstm_hidden_h, lstm_hidden_c = hidden_state
 
             if done:
                 state = self.env.reset()
