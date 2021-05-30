@@ -14,11 +14,13 @@ def main(args):
     num_actions = env.action_space.n
     state_shape = env.observation_space.shape
     state_dtype = env.observation_space.dtype
+    lstm_hidden_shape = (1,1,16)
 
     agent = DRQNAgent(capacity=args.buffer_capacity,
                         n_action=num_actions,
                         state_shape=state_shape,
                         state_dtype=state_dtype,
+						hidden_shape=lstm_hidden_shape,
                         gamma=args.gamma,
                         batch_size=args.batch_size,
                         device=device
