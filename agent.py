@@ -40,18 +40,18 @@ class DRQNAgent(object):
         batch = self.buffer.sample(batch_size)
         batch = self.batch_to_torch(batch, self.device)
 
-        #with torch.no_grad():
-        #    next_values = self.targetnet(batch.state).to(self.device)
-        #    next_values = torch.max(next_values, dim = 1, keepdim = True)[0]
-
         lstm_hidden_h = Variable(torch.zeros(1, batch_size, 16).float()).to(self.device)
         lstm_hidden_c = Variable(torch.zeros(1, batch_size, 16).float()).to(self.device)
 
-        current_values, _ = self.drqn_net(batch.state, (lstm_hidden_h, lstm_hidden_c))
-        next_values = torch.max(current_values, dim = 1, keepdim = True)[0].detach().clone()
-        current_values = current_values.gather(1, batch.action)
+        with torch.no_grad():
+            next_values, _ = self.drqn_net(batch.next_state, (lstm_hidden_h, lstm_hidden_c))
+            next_values = torch.max(next_values, dim = 1, keepdim = True)[0]
 
         target_value = batch.reward + next_values * (1 - batch.terminal) * self.gamma
+        
+        current_values, _ = self.drqn_net(batch.state, (lstm_hidden_h, lstm_hidden_c))
+        #next_values = torch.max(current_values, dim = 1, keepdim = True)[0].detach().clone()
+        current_values = current_values.gather(1, batch.action)
 
         td_error = torch.nn.functional.smooth_l1_loss(current_values, target_value).to(self.device)
 
