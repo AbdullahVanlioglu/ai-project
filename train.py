@@ -65,7 +65,7 @@ class TrainDRQN:
 
                 if (ix % 10000 == 0 and ix != 0):
                     torch.save(self.agent.drqn_net.state_dict(), f"weights/drqn_net.ckpt")
-                    torch.save(self.agent.targetnet.state_dict(), f"weights/drqn_net.ckpt")
+                    torch.save(self.agent.targetnet.state_dict(), f"weights/targetnet.ckpt")
                     self.Evaluate(args)
                 
                 self.agent.drqn_net.train()
