@@ -44,14 +44,13 @@ class DRQNAgent(object):
         #    next_values = self.targetnet(batch.state).to(self.device)
         #    next_values = torch.max(next_values, dim = 1, keepdim = True)[0]
 
-        lstm_hidden_h = Variable(torch.zeros(1, 1, 16).float()).to(self.device)
-        lstm_hidden_c = Variable(torch.zeros(1, 1, 16).float()).to(self.device)
+        lstm_hidden_h = Variable(torch.zeros(1, batch_size, 16).float()).to(self.device)
+        lstm_hidden_c = Variable(torch.zeros(1, batch_size, 16).float()).to(self.device)
 
         current_values, _ = self.drqn_net(batch.state, (lstm_hidden_h, lstm_hidden_c))
+        next_values = torch.max(current_values, dim = 1, keepdim = True)[0].detach().clone()
         current_values = current_values.gather(1, batch.action)
 
-        next_values = torch.max(current_values, dim = 1, keepdim = True)[0].detach().clone()
-        
         target_value = batch.reward + next_values * (1 - batch.terminal) * self.gamma
 
         td_error = torch.nn.functional.smooth_l1_loss(current_values, target_value).to(self.device)

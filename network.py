@@ -41,9 +41,9 @@ class DRQN(nn.Module):
     def forward(self, state, hidden_state):
         state = state.view(-1,3,210,160)
         conv_out = self.conv_net(state)
-        flatten = conv_out.view(conv_out.size(0), -1).unsqueeze(1)
+        flatten = conv_out.view(conv_out.size(0), -1).unsqueeze(0)
         lstm_out, new_hidden = self.lstm_net(flatten, hidden_state)
-        hidden_h, hidden_c = new_hidden
+        lstm_out = lstm_out.view(-1,16)
         output = self.fc(lstm_out)
 
         return output, new_hidden
