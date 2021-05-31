@@ -57,13 +57,13 @@ if __name__ == "__main__":
 						help="Initial value of the epsilon")
 	parser.add_argument("--epsilon-min", type=float, default=0.1,
 						help="Minimum value of the epsilon")
-	parser.add_argument("--epsilon-decay", type=float, default=0.99996,
+	parser.add_argument("--epsilon-decay", type=float, default=0.999,
 						help="Epsilon decay rate for exponential decaying")
 	parser.add_argument("--epsilon-rang", type=float, default=None,
 						help="Epsilon decaying range for linear decay")
 	parser.add_argument("--clip-grad", action="store_true",
 						help="Gradient Clip between -1 and 1. Default: No")
-	parser.add_argument("--eval-period", type=int, default=500,
+	parser.add_argument("--eval-period", type=int, default=10000,
 						help="Evaluation period in terms of iteration")
 	parser.add_argument("--eval-episode", type=int, default=5,
 						help="Number of episodes to evaluate")

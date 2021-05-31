@@ -28,13 +28,11 @@ class DRQN(nn.Module):
                                 )
 
         self.fc = nn.Sequential(
-                        nn.Linear(self.lstm_hidden_dim, 64),
-                        nn.ReLU(),
-                        nn.Linear(64, self.output_dim),
+                        nn.Linear(self.lstm_hidden_dim, self.output_dim),
                                 )
 
     def forward(self, state, hidden_state):
-        state = state.view(-1,3,210,160)
+        state = state.view(-1,3,210,160) / 255.0
         #state = state.permute(0,3,1,2)
         conv_out = self.conv_net(state)
         flatten = conv_out.view(conv_out.size(0), -1).unsqueeze(0)

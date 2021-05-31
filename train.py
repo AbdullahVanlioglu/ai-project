@@ -21,6 +21,7 @@ class TrainDRQN:
         self.target_update_period = args.target_update_period
         self.manuel_control = False
         self.write_period = args.write_period
+        self.eval_period = args.eval_period
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.optimizer = torch.optim.Adam(self.agent.drqn_net.parameters(), lr = self.lr)
 
@@ -63,7 +64,7 @@ class TrainDRQN:
                 lstm_hidden_h, lstm_hidden_c = hidden_state
                 episode_reward += reward
 
-                if (ix % 2000 == 0 and ix != 0):
+                if (ix % self.eval_period == 0 and ix != 0):
                     torch.save(self.agent.drqn_net.state_dict(), f"weights/drqn_net.ckpt")
                     torch.save(self.agent.targetnet.state_dict(), f"weights/targetnet.ckpt")
                     self.Evaluate(args)
@@ -92,12 +93,12 @@ class TrainDRQN:
                         self.epsilon *= self.epsilon_decay
                 
                     #print("Episode [%d] , Average20 Score = %f, loss = %f, epsilon = %f" % (i_episode, np.mean(scores_window), loss, self.epsilon))
-                    print("Episode [%d] , Episode Score = %f, loss = %f, epsilon = %f" % (i_episode, episode_reward, loss, self.epsilon))
+                    print("Num Iter [%d], Episode [%d] , Episode Score = %f, loss = %f, epsilon = %f" % (ix, i_episode, episode_reward, loss, self.epsilon))
                     i_episode += 1
                     episode_reward = 0
                     break
                 
-                self.env.render()
+                # self.env.render()
             
     def Evaluate(self, args):
         print("### Test ###")
