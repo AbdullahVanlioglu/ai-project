@@ -25,26 +25,26 @@ class DRQNAgent(object):
 
     def e_greedy_policy(self, state, hidden_state, epsilon):
         if np.random.random() < epsilon:
-            _, new_hidden = self.drqn_net(state, hidden_state)
+            values, new_hidden = self.drqn_net(state, hidden_state)
             return np.random.randint(0, self.n_action), new_hidden
         else:
             return self.greedy_policy(state, hidden_state)
 
     def greedy_policy(self, state, hidden_state):
-        values, new_hidden = self.drqn_net(state, hidden_state)
+        values, new_hidden = self.targetnet(state, hidden_state)
         action = torch.argmax(values, dim = 1)
 
-        return action, new_hidden
+        return action.item(), new_hidden
 
-    def update(self, device):
+    def update(self):
         self.targetnet.load_state_dict(self.drqn_net.state_dict())
 
     def loss(self,batch_size):
         batch = self.buffer.sample(batch_size)
         batch = self.batch_to_torch(batch, self.device)
 
-        lstm_hidden_h = Variable(torch.zeros(1, batch_size, 16).float()).to(self.device)
-        lstm_hidden_c = Variable(torch.zeros(1, batch_size, 16).float()).to(self.device)
+        lstm_hidden_h = Variable(torch.zeros(1, batch_size, 64).float()).to(self.device)
+        lstm_hidden_c = Variable(torch.zeros(1, batch_size, 64).float()).to(self.device)
 
         with torch.no_grad():
             next_values, _ = self.targetnet(batch.next_state, (lstm_hidden_h, lstm_hidden_c))
@@ -53,7 +53,6 @@ class DRQNAgent(object):
         target_value = batch.reward + next_values * (1 - batch.terminal) * self.gamma
         
         current_values, _ = self.drqn_net(batch.state, (lstm_hidden_h, lstm_hidden_c))
-        #next_values = torch.max(current_values, dim = 1, keepdim = True)[0].detach().clone()
         current_values = current_values.gather(1, batch.action)
 
         td_error = torch.nn.functional.smooth_l1_loss(current_values, target_value).to(self.device)

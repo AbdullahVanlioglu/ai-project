@@ -14,7 +14,7 @@ def main(args):
     num_actions = env.action_space.n
     state_shape = env.observation_space.shape
     state_dtype = env.observation_space.dtype
-    lstm_hidden_shape = (1,1,16)
+    lstm_hidden_shape = (1,1,64)
 
     agent = DRQNAgent(capacity=args.buffer_capacity,
                         n_action=num_actions,
@@ -43,15 +43,15 @@ if __name__ == "__main__":
 						help="Number of iterations until starting to update")
 	parser.add_argument("--num-episode", type=int, default=30000,
 						help="Maximum length of an episode before termination")
-	parser.add_argument("--batch-size", type=int, default=16,
+	parser.add_argument("--batch-size", type=int, default=8,
 						help="Batch size of each update in training")
 	parser.add_argument("--gamma", type=float, default=0.99,
 						help="Discount Factor")
 	parser.add_argument("--lr", type=float, default=1e-3,
 						help="Discount Factor")
-	parser.add_argument("--target-update-period", type=int, default=2000,
+	parser.add_argument("--target-update-period", type=int, default=1500,
 						help="Target network updating period")
-	parser.add_argument("--buffer-capacity", type=int, default=1500,
+	parser.add_argument("--buffer-capacity", type=int, default=8000,
 						help="Replay buffer capacity")
 	parser.add_argument("--epsilon-init", type=float, default=1,
 						help="Initial value of the epsilon")

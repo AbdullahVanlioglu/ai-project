@@ -45,13 +45,13 @@ class TrainDRQN:
             reward_list = []
 
             state = self.env.reset()
-            lstm_hidden_h = Variable(torch.zeros(1, 1, 16).float()).to(self.device)
-            lstm_hidden_c = Variable(torch.zeros(1, 1, 16).float()).to(self.device)
+            lstm_hidden_h = Variable(torch.zeros(1, 1, 64).float()).to(self.device)
+            lstm_hidden_c = Variable(torch.zeros(1, 1, 64).float()).to(self.device)
 
             #for itr in range(self.max_iteration):
             while True:
                 ix += 1
-                
+
                 torch_state = DRQNAgent.state_to_torch(state, self.device).unsqueeze(0)
                 action, hidden_state = self.agent.e_greedy_policy(torch_state, (lstm_hidden_h, lstm_hidden_c), self.epsilon)
 
@@ -63,16 +63,19 @@ class TrainDRQN:
                 lstm_hidden_h, lstm_hidden_c = hidden_state
                 episode_reward += reward
 
-                if (ix % 10000 == 0 and ix != 0):
+                if (ix % 2000 == 0 and ix != 0):
                     torch.save(self.agent.drqn_net.state_dict(), f"weights/drqn_net.ckpt")
                     torch.save(self.agent.targetnet.state_dict(), f"weights/targetnet.ckpt")
                     self.Evaluate(args)
                 
                 self.agent.drqn_net.train()
                 self.agent.targetnet.train()
-                if (self.agent.buffer.size > self.batch_size):
 
-                    self.agent.update(self.device)
+                if (self.agent.buffer.size > self.batch_size):
+                    
+                    if ix % self.target_update_period == 0:
+                        self.agent.update()
+
                     self.optimizer.zero_grad()
                     loss = self.agent.loss(self.batch_size)
                     loss.backward()
@@ -92,38 +95,41 @@ class TrainDRQN:
                     print("Episode [%d] , Episode Score = %f, loss = %f, epsilon = %f" % (i_episode, episode_reward, loss, self.epsilon))
                     i_episode += 1
                     episode_reward = 0
+                    break
                 
                 self.env.render()
             
     def Evaluate(self, args):
         print("### Test ###")
 
-        self.agent.drqn_net.load_state_dict(torch.load("weights/drqn_net.ckpt"))
         self.agent.targetnet.load_state_dict(torch.load("weights/targetnet.ckpt"))
-        i_episode = 1
 
-        state = self.env.reset()
-        lstm_hidden_h = Variable(torch.zeros(1, 1, 16).float()).to(self.device)
-        lstm_hidden_c = Variable(torch.zeros(1, 1, 16).float()).to(self.device)
-        episode_reward = 0
-        
-        self.agent.drqn_net.eval()
-        self.agent.targetnet.eval()
-        for frame in range(1500):
+        for _ in range(3):
+            i_episode = 1
+
+            state = self.env.reset()
+            lstm_hidden_h = Variable(torch.zeros(1, 1, 64).float()).to(self.device)
+            lstm_hidden_c = Variable(torch.zeros(1, 1, 64).float()).to(self.device)
+            episode_reward = 0
             
-            torch_state = DRQNAgent.state_to_torch(state, self.device).unsqueeze(0)
+            self.agent.drqn_net.eval()
+            self.agent.targetnet.eval()
+            while True:
+                
+                torch_state = DRQNAgent.state_to_torch(state, self.device).unsqueeze(0)
 
-            action, hidden_state = self.agent.greedy_policy(torch_state, (lstm_hidden_h, lstm_hidden_c))
-            next_state, reward, done, _ = self.env.step(action)   
+                action, hidden_state = self.agent.greedy_policy(torch_state, (lstm_hidden_h, lstm_hidden_c))
+                next_state, reward, done, _ = self.env.step(action)   
 
-            state = next_state
-            episode_reward += reward
-            lstm_hidden_h, lstm_hidden_c = hidden_state
+                state = next_state
+                episode_reward += reward
+                lstm_hidden_h, lstm_hidden_c = hidden_state
 
-            if done:
-                state = self.env.reset()
-                print("Eval Episode [%d] Frame [%i], Eval Score = %f" % (i_episode, frame, episode_reward))
-                episode_reward = 0
-                i_episode += 1
+                if done:
+                    state = self.env.reset()
+                    print("Eval Episode [%d], Eval Score = %f" % (i_episode, episode_reward))
+                    episode_reward = 0
+                    i_episode += 1
+                    break
 
-            self.env.render()
+                self.env.render()
